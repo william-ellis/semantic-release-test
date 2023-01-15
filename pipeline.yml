@@ -20,14 +20,7 @@ stages:
           - pwsh: |
               Install-Module AzPipelineVariable -Force
           - script: npm ci
-          - pwsh: |
-              $isMainBranch = $Env:BUILD_SOURCEBRANCHNAME -eq 'main'
-              $buildReason = $Env:BUILD_REASON
-
-              npx semantic-release --dry-run
-
-              ($null -ne $Env:NEXTVERSION) -and $isMainBranch -and ($buildReason -in 'IndividualCI','Manual')
-              | Set-AzPipelineVariable trigger -Output -Verbose
+          - script: npx semantic-release --dry-run
             name: release
             displayName: check if release should be triggered
           - pwsh: .\Build.ps1 -Version '$(release.nextVersion)'
