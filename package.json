@@ -1,0 +1,13 @@
+{
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "semantic-release": "^20.0.2"
+  },
+  "release": {
+    "branches": [
+      "main"
+    ]
+  }
+}
