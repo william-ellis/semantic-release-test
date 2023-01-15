@@ -48,4 +48,5 @@ stages:
                 - download: current
                   artifact: module
                   displayName: download module artifact
+                - script: npm ci
                 - script: npx semantic-release
