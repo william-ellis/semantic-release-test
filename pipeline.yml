@@ -16,6 +16,7 @@ stages:
           - checkout: self
             fetchDepth: 0
             fetchTags: true
+            persistCredentials: true
           - pwsh: |
               Install-Module AzPipelineVariable -Force
           - script: npm ci
