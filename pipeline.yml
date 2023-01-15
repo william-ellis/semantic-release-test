@@ -18,17 +18,18 @@ stages:
             fetchTags: true
           - pwsh: |
               Install-Module AzPipelineVariable -Force
+          - script: npm ci
           - pwsh: |
               $isMainBranch = $Env:BUILD_SOURCEBRANCHNAME -eq 'main'
               $buildReason = $Env:BUILD_REASON
-              $nextVersion = uplift tag --next --silent --no-prefix --ignore-detached
 
-              "$nextVersion" | Set-AzPipelineVariable version -Output -Verbose
-              ($null -ne $nextVersion) -and $isMainBranch -and ($buildReason -in 'IndividualCI','Manual')
+              npx semantic-release --dry-run
+
+              ($null -ne $Env:NEXTVERSION) -and $isMainBranch -and ($buildReason -in 'IndividualCI','Manual')
               | Set-AzPipelineVariable trigger -Output -Verbose
             name: release
             displayName: check if release should be triggered
-          - pwsh: .\Build.ps1 -Version '$(release.version)'
+          - pwsh: .\Build.ps1 -Version '$(release.nextVersion)'
             displayName: build module
           - publish: ./output
             artifact: module
@@ -37,7 +38,7 @@ stages:
     displayName: publish
     condition: and(succeeded(), eq(dependencies.ci.outputs['ci1.release.trigger'], 'True'))
     variables:
-      version: $[stageDependencies.ci.ci1.outputs['release.version']]
+      nextVersion: $[stageDependencies.ci.ci1.outputs['release.nextVersion']]
     jobs:
       - deployment:
         displayName: publish module
@@ -50,28 +51,7 @@ stages:
                   fetchDepth: 0
                   fetchTags: true
                   persistCredentials: true
-                - pwsh: |
-                    $version = $Env:VERSION
-                    if (git tag --list "v$version") {
-                      throw "Conflict: Version $version already exists."
-                    }
                 - download: current
                   artifact: module
                   displayName: download module artifact
-                - script: echo "publish module to PSGallery"
-                  displayName: publish module
-                - script: |
-                    git tag v$(version)
-                    git push origin v$(version)
-                  displayName: tag release
-                  workingDirectory: $(Build.SourcesDirectory)
-                - script: |
-                    uplift changelog --no-stage --no-push --ignore-detached
-                    git switch main
-                    git add CHANGELOG.md
-                    git config --global user.name william-ellis
-                    git config --global user.email 11599796+william-ellis@users.noreply.github.com
-                    git commit -m "chore: update changelog"
-                    git push
-                  workingDirectory: $(Build.SourcesDirectory)
-                  displayName: update changelog
+                - script: npx semantic-release

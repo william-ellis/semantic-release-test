@@ -13,7 +13,8 @@
     "plugins": [
       "@semantic-release/commit-analyzer",
       ["@semantic-release/exec", {
-        "publishCmd": "echo \"Publishing release ${nextRelease.version}\""
+        "verifyReleaseCmd": "Set-AzPipelineVariable nextVersion ${nextRelease.version} -Output -Verbose",
+        "shell": "pwsh"
       }]
     ]
   }
