@@ -21,7 +21,7 @@ jobs:
       - script: npx semantic-release --dry-run
         displayName: semantic-release dry-run to calculate next version
       - pwsh: |
-          $ENV:NEXTVERSION ?? '0.0.0' | Set-AzPipelineVariable version
+          $ENV:NEXTVERSION ?? '0.0.0' | Set-AzPipelineVariable version -Verbose
         displayName: set "version" variable
       - pwsh: .\Build.ps1 -Version $(version)
         displayName: build module
