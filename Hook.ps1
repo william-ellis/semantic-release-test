@@ -4,5 +4,5 @@ param(
     [semver]$NextVersion
 )
 
-[string]$NextVersion | Set-AzPipelineVariable nextVersion -Output
-$true | Set-AzPipelineVariable trigger -Output
+[string]$NextVersion | Set-AzPipelineVariable nextVersion
+$true | Set-AzPipelineVariable triggerRelease
