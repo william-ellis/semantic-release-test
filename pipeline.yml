@@ -7,46 +7,43 @@ pr:
 pool:
   vmImage: ubuntu-latest
 
-stages:
-  - stage: ci
-    displayName: build
-    jobs:
-      - job: ci1
-        steps:
-          - checkout: self
-            fetchDepth: 0
-            fetchTags: true
-            persistCredentials: true
-          - pwsh: Install-Module AzPipelineVariable -Force
-          - script: npm ci
-          - script: npx semantic-release --dry-run
-            name: release
-            displayName: check if release should be triggered
-          - pwsh: .\Build.ps1 -Version '$(release.nextVersion)'
-            displayName: build module
-          - publish: ./output
-            artifact: module
-            displayName: publish module artifact
-  - stage:
-    displayName: publish
+lockBehavior: sequential
+
+jobs:
+  - job: ci
+    steps:
+      - checkout: self
+        fetchDepth: 0
+        fetchTags: true
+        persistCredentials: true
+      - pwsh: Install-Module AzPipelineVariable -Force
+      - script: npm ci
+      - script: npx semantic-release --dry-run
+        name: release
+        displayName: check if release should be triggered
+      - pwsh: .\Build.ps1 -Version '$(release.nextVersion)'
+        displayName: build module
+      - publish: ./output
+        artifact: module
+        displayName: publish module artifact
+  - deployment:
+    dependsOn: ci
     condition: and(succeeded(), eq(dependencies.ci.outputs['ci1.release.trigger'], 'True'))
+    displayName: publish module
+    environment: psgallery
     variables:
-      nextVersion: $[stageDependencies.ci.ci1.outputs['release.nextVersion']]
-    jobs:
-      - deployment:
-        displayName: publish module
-        environment: psgallery
-        strategy:
-          runOnce:
-            deploy:
-              steps:
-                - checkout: self
-                  fetchDepth: 0
-                  fetchTags: true
-                  persistCredentials: true
-                - download: current
-                  artifact: module
-                  displayName: download module artifact
-                - pwsh: Install-Module AzPipelineVariable -Force
-                - script: npm ci
-                - script: npx semantic-release
+      nextVersion: $[stageDependencies.ci.outputs['release.nextVersion']]
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            - checkout: self
+              fetchDepth: 0
+              fetchTags: true
+              persistCredentials: true
+            - download: current
+              artifact: module
+              displayName: download module artifact
+            - pwsh: Install-Module AzPipelineVariable -Force
+            - script: npm ci
+            - script: npx semantic-release
