@@ -12,10 +12,13 @@
     ],
     "plugins": [
       "@semantic-release/commit-analyzer",
-      ["@semantic-release/exec", {
-        "verifyReleaseCmd": "Set-AzPipelineVariable nextVersion ${nextRelease.version} -Output -Verbose; Set-AzPipelineVariable trigger $true -Output -Verbose",
-        "shell": "pwsh"
-      }]
+      [
+        "@semantic-release/exec",
+        {
+          "verifyReleaseCmd": "./Hook.ps1 ${nextRelease.version}",
+          "shell": "pwsh"
+        }
+      ]
     ]
   }
 }
