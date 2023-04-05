@@ -1,5 +1,5 @@
 # semantic-release-test
 
-[![Build Status](https://dev.azure.com/william-ellis/sandbox/_apis/build/status/william-ellis.azure-pipelines-sandbox?branchName=main)](https://dev.azure.com/william-ellis/sandbox/_build/latest?definitionId=5&branchName=main)
+[![Build Status](https://dev.azure.com/william-ellis/semantic-release-test/_apis/build/status%2Fwilliam-ellis.semantic-release-test?branchName=main)](https://dev.azure.com/william-ellis/semantic-release-test/_build/latest?definitionId=4&branchName=main)
 
 Testing <https://github.com/semantic-release>
