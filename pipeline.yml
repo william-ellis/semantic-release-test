@@ -105,11 +105,8 @@ jobs:
       - pwsh: |
           Install-Module PowerShellGet -RequiredVersion '3.0.20-beta20' -AllowPrerelease -Force
         displayName: install PowerShellGet v3
-      - pwsh: |
-          $dir = New-Item $(Agent.TempDirectory)\LocalRepo -ItemType directory
-          Register-PSResourceRepository LocalRepo -Uri $dir -Trusted
-        displayName: register local powershell repository
       - script: npm ci
         displayName: install npm dependencies
+      - task: NuGetAuthenticate@1
       - script: npx semantic-release
         displayName: publish module
