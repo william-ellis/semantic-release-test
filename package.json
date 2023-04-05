@@ -1,7 +1,4 @@
 {
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "devDependencies": {
     "@semantic-release/exec": "^6.0.3",
     "semantic-release": "19.0.5"
@@ -15,7 +12,7 @@
       [
         "@semantic-release/exec",
         {
-          "verifyReleaseCmd": "./Hook.ps1 ${nextRelease.version} -Verbose",
+          "pulishCmd": "./Publish.ps1 ./output/Test.psd1 ${nextRelease.version} -Verbose",
           "shell": "pwsh"
         }
       ]

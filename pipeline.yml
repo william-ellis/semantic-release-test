@@ -1,51 +1,112 @@
 trigger:
-  - main
+  branches:
+    include:
+      - main
+  paths:
+    exclude:
+      - README.md
+      - CHANGELOG.md
 
 pr:
-  - main
+  branches:
+    include:
+      - main
+  paths:
+    exclude:
+      - README.md
+      - CHANGELOG.md
 
 pool:
   vmImage: ubuntu-latest
 
-lockBehavior: sequential
-
 jobs:
   - job: ci
+    displayName: lint and build
+    steps:
+      - pwsh: Invoke-ScriptAnalyzer . -Recurse -ReportSummary -EnableExit
+        displayName: run script analyzer
+      - pwsh: .\Build.ps1
+        displayName: build module
+      - publish: ./output
+        artifact: module
+        displayName: publish module artifact
+  - job: test
+    dependsOn: ci
+    displayName: test
+    strategy:
+      matrix:
+        Windows:
+          vmImage: windows-latest
+          pwsh: true
+        Linux:
+          vmImage: ubuntu-latest
+          pwsh: true
+    pool:
+      vmImage: $(vmImage)
+    steps:
+      - download: current
+        artifact: module
+        displayName: download module artifact
+      - task: PowerShell@2
+        displayName: install PowerShellGet v3
+        inputs:
+          targetType: inline
+          pwsh: $(pwsh)
+          script: |
+            Install-Module PowerShellGet -RequiredVersion '3.0.20-beta20' -AllowPrerelease -Force
+      - pwsh: |
+          $dir = New-Item $(Agent.TempDirectory)\LocalRepo -ItemType directory
+          Register-PSResourceRepository LocalRepo -Uri $dir -Trusted
+        displayName: register local powershell repository
+      - pwsh: Publish-PSResource -Path $(Pipeline.Workspace)\module -Repository LocalRepo
+        displayName: publish module to local repository
+      - task: PowerShell@2
+        displayName: install module from local repo
+        inputs:
+          targetType: inline
+          pwsh: $(pwsh)
+          script: |
+            Install-PSResource Test -Repository LocalRepo -Prerelease -Verbose
+      - task: PowerShell@2
+        displayName: run unit tests
+        inputs:
+          targetType: inline
+          pwsh: $(pwsh)
+          script: |
+            Import-Module Test -Verbose
+            Invoke-Pester -Configuration (New-PesterConfiguration @{
+              TestResult = @{
+                Enabled = $true
+                OutputFormat = 'NUnitXml'
+                OutputPath = 'unitTestResults.xml'
+              }
+              Run = @{
+                Container = New-PesterContainer -Path 'Test.Tests.ps1'
+              }
+            })
+      - task: PublishTestResults@2
+        displayName: publish test results
+        condition: succeededOrFailed()
+        inputs:
+          testResultsFiles: unitTestResults.xml
+          testResultsFormat: NUnit
+          testRunTitle: Unit Tests $(Agent.JobName)
+  - job:
+    displayName: publish
+    dependsOn: test
     steps:
       - checkout: self
         fetchDepth: 0
         fetchTags: true
         persistCredentials: true
-      - pwsh: Install-Module AzPipelineVariable -Force
-      - script: npm ci
-      - script: npx semantic-release --dry-run
-        displayName: semantic-release dry-run to calculate next version
-      - pwsh: |
-          $ENV:NEXTVERSION ?? '0.0.0' | Set-AzPipelineVariable version -Verbose
-        displayName: set "version" variable
-      - pwsh: .\Build.ps1 -Version $(version)
-        displayName: build module
-      - publish: ./output
+      - download: current
         artifact: module
-        displayName: publish module artifact
-  - deployment:
-    dependsOn: ci
-    condition: and(succeeded(), eq(dependencies.ci.outputs['ci1.triggerRelease'], 'True'))
-    displayName: publish module
-    environment: psgallery
-    variables:
-      nextVersion: $[stageDependencies.ci.outputs['nextVersion']]
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-            - checkout: self
-              fetchDepth: 0
-              fetchTags: true
-              persistCredentials: true
-            - download: current
-              artifact: module
-              displayName: download module artifact
-            - pwsh: Install-Module AzPipelineVariable -Force
-            - script: npm ci
-            - script: npx semantic-release
+        displayName: download module artifact
+      - pwsh: |
+          Install-Module PowerShellGet -RequiredVersion '3.0.20-beta20' -AllowPrerelease -Force
+        displayName: install PowerShellGet v3
+      - pwsh: |
+          #Publish-PSResource -Path $(Pipeline.Workspace)\module -Repository PSGallery -ApiKey $Env:API_KEY -Verbose
+        env:
+          API_KEY: $(PSGalleryApiKey)
+        displayName: publish module to PSGallery
