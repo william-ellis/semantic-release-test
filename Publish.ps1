@@ -7,17 +7,11 @@ param(
     [System.Version]$Version
 )
 
-function New-TemporaryDirectory {
-    $parent = [System.IO.Path]::GetTempPath()
-    $name = [System.IO.Path]::GetRandomFileName()
-    New-Item -ItemType Directory -Path (Join-Path $parent $name)
-}
-
 Update-ModuleManifest $ManifestPath -ModuleVersion $Version
 
 try {
-    $repoDir = New-TemporaryDirectory
     $repoName = [string](New-Guid)
+    $repoDir = New-Item -ItemType Directory -Path (Join-Path ([System.IO.Path]::GetTempPath()) $repoName)
     Register-PSResourceRepository -Name $repoName -Uri $repoDir
 
     Publish-PSResource -Path $ManifestPath -Repository $repoName -SkipDependenciesCheck -SkipModuleManifestValidate
