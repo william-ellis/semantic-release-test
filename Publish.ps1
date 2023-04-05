@@ -15,7 +15,7 @@ try {
     Register-PSResourceRepository -Name $repoName -Uri $repoDir
 
     Publish-PSResource -Path $ManifestPath -Repository $repoName -SkipDependenciesCheck -SkipModuleManifestValidate
-    
+
     $nupkg = Get-ChildItem $repoDir -Filter *.nupkg
     Write-Verbose "Publishing $nupkg"
     dotnet nuget push $nupkg `
