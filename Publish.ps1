@@ -8,4 +8,4 @@ param(
 )
 
 Update-ModuleManifest $ManifestPath -ModuleVersion $Version
-Publish-PSResource -Path $ManifestPath -Repository LocalRepo -SkipDependenciesCheck -SkipModuleManifestValidation
+Publish-PSResource -Path $ManifestPath -Repository LocalRepo -SkipDependenciesCheck -SkipModuleManifestValidate

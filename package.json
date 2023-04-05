@@ -12,7 +12,7 @@
       [
         "@semantic-release/exec",
         {
-          "pulishCmd": "./Publish.ps1 ./output/Test.psd1 ${nextRelease.version} -Verbose",
+          "publishCmd": "./Publish.ps1 ./output/Test.psd1 ${nextRelease.version} -Verbose",
           "shell": "pwsh"
         }
       ]

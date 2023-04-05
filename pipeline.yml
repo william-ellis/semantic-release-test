@@ -106,7 +106,8 @@ jobs:
           Install-Module PowerShellGet -RequiredVersion '3.0.20-beta20' -AllowPrerelease -Force
         displayName: install PowerShellGet v3
       - pwsh: |
-          #Publish-PSResource -Path $(Pipeline.Workspace)\module -Repository PSGallery -ApiKey $Env:API_KEY -Verbose
-        env:
-          API_KEY: $(PSGalleryApiKey)
-        displayName: publish module to PSGallery
+          $dir = New-Item $(Agent.TempDirectory)\LocalRepo -ItemType directory
+          Register-PSResourceRepository LocalRepo -Uri $dir -Trusted
+        displayName: register local powershell repository
+      - script: npx semantic-release
+        displayName: publish module
